@@ -26,4 +26,30 @@ const db = mysql.createConnection(
     console.log(`Connected to the empoyee_db database.`)
   );
 
-  
+  const questions = [
+    {
+        type: 'list',
+        name: 'choice',
+        message: 'What would you like to do?',
+        choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update an employee role', 'exit'], 
+    }
+]
+
+function init() {
+    db.connect();
+    getUserChoice();
+}
+
+function getUserChoice(){
+    inquirer
+    .prompt(
+        questions
+    )
+    .then((response) =>
+        //showResults(response),
+        console.log(response.choice),
+    )
+}
+
+// Function call to initialize app
+init();
