@@ -3,6 +3,7 @@ const express = require('express');
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
+const { printTable } = require('console-table-printer');
 
 const fs = require('fs');
 
@@ -47,13 +48,11 @@ function getUserChoice(){
     )
     .then((response) =>
         showResults(response),
-        //console.log(response.choice),
     )
 }
 
 function showResults(response){
     const selectedChoice = response.choice;
-    console.log("Selected Choice: " + selectedChoice);
 
     if (selectedChoice == "View all departments"){
         viewAllDepartments();
@@ -90,8 +89,7 @@ function showResults(response){
 function viewAllDepartments(){
 
     const sql =   `SELECT id as department_id, name as department_name FROM department`; 
-    console.log(sql);
-    showQueryResult(sql);
+    showQueryResult(sql, false);
 }
 
 function viewAllRoles(){
@@ -99,8 +97,7 @@ function viewAllRoles(){
     FROM role
     JOIN department
     ON role.department_id = department.id`; 
-    console.log(sql);
-    showQueryResult(sql);
+    showQueryResult(sql, false);
 }
 
 function viewAllEmployees(){
@@ -112,17 +109,7 @@ function viewAllEmployees(){
     ON e.role_id = role.id
     JOIN department
     ON role.department_id = department.id`;
-    console.log(sql);
-    showQueryResult(sql);
-}
-
-function showQueryResult(sql){
-    db.query(sql, (err, result) => {
-        if (err) {
-          console.log(err);
-        }
-        console.table(['', ''], result);
-    });
+    showQueryResult(sql, false);
 }
 
 function addDepartment(){
@@ -141,17 +128,14 @@ function addDepartment(){
 
 async function addRole() {
     const departments = await getDepartments();
-    console.log("Departments: " + departments);
     let deptNamesArray = [];
     departments.forEach((department) => {
-        //deptNamesArray.push(department.name);
         deptNamesArray.push({
             name: department.name, 
             value:  department.id
         });
         
     });
-    console.log(deptNamesArray);
     const newRoleDetails = [
         {
             type: 'input',
@@ -182,8 +166,6 @@ async function addRole() {
 async function addEmployee(){
     const roles = await getRoles();
     const managers = await getManagers();
-    console.log("Roles: " + roles);
-    console.log("Managers: " + managers);
     let roleNamesArray = [];
     roles.forEach((role) => {
         roleNamesArray.push({
@@ -198,7 +180,6 @@ async function addEmployee(){
             value:  manager.id
         });
     });
-    console.log(managerNamesArray);
     const newEmployeeDetails = [
         {
             type: 'input',
@@ -256,22 +237,36 @@ async function getManagers(){
 function insertDepartmentName(response){
     const sql = `INSERT INTO department (name)
     VALUES ("${response.department_name}")`; 
-    showQueryResult(sql);
+    showQueryResult(sql, true);
     getUserChoice();
 }
 
 function insertRoleDetails(response){
     const sql = `INSERT INTO role (title, salary, department_id)
     VALUES ("${response.name}", "${response.salary}", "${response.department_id}")`;
-    showQueryResult(sql);
+    showQueryResult(sql, true);
     getUserChoice();
 }
 
 function insertEmployeeDetails(answer){
     const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
     VALUES ("${answer.first_name}", "${answer.last_name}", "${answer.role_id}", "${answer.manager_id}")`;
-    showQueryResult(sql);
+    showQueryResult(sql, true);
     getUserChoice();
+}
+
+function showQueryResult(sql, insertRow){
+    db.query(sql, (err, result) => {
+        if (err) {
+          console.log(err);
+        }
+        if(insertRow){
+            console.log(result);
+        }else{
+            console.log("\n");
+            printTable(result);
+        }
+    });
 }
 
 // Function call to initialize app
