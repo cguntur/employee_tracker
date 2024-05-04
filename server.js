@@ -139,9 +139,137 @@ function addDepartment(){
     )
 }
 
+async function addRole() {
+    const departments = await getDepartments();
+    console.log("Departments: " + departments);
+    let deptNamesArray = [];
+    departments.forEach((department) => {
+        //deptNamesArray.push(department.name);
+        deptNamesArray.push({
+            name: department.name, 
+            value:  department.id
+        });
+        
+    });
+    console.log(deptNamesArray);
+    const newRoleDetails = [
+        {
+            type: 'input',
+            message: 'Enter the name of the role',
+            name: 'name',
+        },
+        {
+            type: 'input',
+            message: 'Enter the salary for the role',
+            name: 'salary',
+        },
+        {
+            type: 'list',
+            message: 'Choose the department',
+            choices: deptNamesArray,
+            name: 'department_id',
+        }
+    ]
+    await inquirer
+    .prompt(
+        newRoleDetails
+    )
+    .then((answer) =>
+        insertRoleDetails(answer)
+    )
+}
+
+async function addEmployee(){
+    const roles = await getRoles();
+    const managers = await getManagers();
+    console.log("Roles: " + roles);
+    console.log("Managers: " + managers);
+    let roleNamesArray = [];
+    roles.forEach((role) => {
+        roleNamesArray.push({
+            name: role.title, 
+            value:  role.id
+        });
+    });
+    let managerNamesArray = [];
+    managers.forEach((manager) => {
+        managerNamesArray.push({
+            name: manager.first_name +'' + manager.last_name, 
+            value:  manager.id
+        });
+    });
+    console.log(managerNamesArray);
+    const newEmployeeDetails = [
+        {
+            type: 'input',
+            message: 'Enter the first name of the employee',
+            name: 'first_name',
+        },
+        {
+            type: 'input',
+            message: 'Enter the last name of the employee',
+            name: 'last_name',
+        },
+        {
+            type: 'list',
+            message: 'Choose the role',
+            choices: roleNamesArray,
+            name: 'role_id',
+        },
+        {
+            type: 'list',
+            message: 'Choose the manager',
+            choices: managerNamesArray,
+            name:'manager_id',
+        }
+    ]
+    inquirer
+    .prompt(
+        newEmployeeDetails
+    )
+    .then((answer) =>
+        insertEmployeeDetails(answer)
+    ) 
+}
+
+async function getDepartments(){
+    const sql =   `SELECT * FROM department`;
+    var departments;
+    departments = await db.promise().query(sql);
+    return departments[0];
+}
+
+async function getRoles(){
+    const sql =   `SELECT * FROM role`;
+    var roles;
+    roles = await db.promise().query(sql);
+    return roles[0];
+}
+
+async function getManagers(){
+    const sql =   `SELECT * FROM employee`;
+    var managers;
+    managers = await db.promise().query(sql);
+    return managers[0];
+}
+
 function insertDepartmentName(response){
     const sql = `INSERT INTO department (name)
     VALUES ("${response.department_name}")`; 
+    showQueryResult(sql);
+    getUserChoice();
+}
+
+function insertRoleDetails(response){
+    const sql = `INSERT INTO role (title, salary, department_id)
+    VALUES ("${response.name}", "${response.salary}", "${response.department_id}")`;
+    showQueryResult(sql);
+    getUserChoice();
+}
+
+function insertEmployeeDetails(answer){
+    const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
+    VALUES ("${answer.first_name}", "${answer.last_name}", "${answer.role_id}", "${answer.manager_id}")`;
     showQueryResult(sql);
     getUserChoice();
 }
